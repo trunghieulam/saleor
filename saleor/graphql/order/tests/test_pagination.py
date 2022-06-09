@@ -50,16 +50,19 @@ def draft_orders_for_pagination(db, channel_USD):
                 total=TaxedMoney(net=Money(1, "USD"), gross=Money(1, "USD")),
                 status=OrderStatus.DRAFT,
                 channel=channel_USD,
+                should_refresh_prices=False,
             ),
             Order(
                 total=TaxedMoney(net=Money(2, "USD"), gross=Money(2, "USD")),
                 status=OrderStatus.DRAFT,
                 channel=channel_USD,
+                should_refresh_prices=False,
             ),
             Order(
                 total=TaxedMoney(net=Money(3, "USD"), gross=Money(3, "USD")),
                 status=OrderStatus.DRAFT,
                 channel=channel_USD,
+                should_refresh_prices=False,
             ),
         ]
     )
@@ -373,7 +376,11 @@ def test_draft_order_query_pagination_with_filter_created(
     channel_USD,
 ):
     with freeze_time("2012-01-14"):
-        Order.objects.create(status=OrderStatus.DRAFT, channel=channel_USD)
+        Order.objects.create(
+            status=OrderStatus.DRAFT,
+            channel=channel_USD,
+            should_refresh_prices=False,
+        )
     page_size = 2
     variables = {"first": page_size, "after": None, "filter": orders_filter}
     staff_api_client.user.user_permissions.add(permission_manage_orders)
@@ -566,7 +573,7 @@ def test_draft_orders_query_pagination_with_filter_search_by_number(
     staff_api_client,
     permission_manage_orders,
 ):
-    update_order_search_document(draft_order)
+    update_order_search_document(draft_order, save=True)
     page_size = 2
     variables = {
         "first": page_size,

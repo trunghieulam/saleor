@@ -13,7 +13,6 @@ from graphql.execution import ExecutionResult
 from prices import Money, TaxedMoney
 from promise.promise import Promise
 
-from ..checkout.interface import CheckoutTaxedPricesData
 from ..core.models import EventDelivery
 from ..payment.interface import (
     CustomerSource,
@@ -34,7 +33,7 @@ if TYPE_CHECKING:
     from ..checkout.models import Checkout
     from ..core.middleware import Requestor
     from ..core.notify_events import NotifyEventType
-    from ..core.taxes import TaxType
+    from ..core.taxes import TaxData, TaxType
     from ..discount import DiscountInfo, Voucher
     from ..discount.models import Sale
     from ..giftcard.models import GiftCard
@@ -218,7 +217,7 @@ class BasePlugin:
             Iterable["DiscountInfo"],
             TaxedMoney,
         ],
-        CheckoutTaxedPricesData,
+        TaxedMoney,
     ]
 
     #  Calculate checkout line unit price.
@@ -231,7 +230,7 @@ class BasePlugin:
             Iterable["DiscountInfo"],
             Any,
         ],
-        CheckoutTaxedPricesData,
+        TaxedMoney,
     ]
 
     #  Calculate the shipping costs for checkout.
@@ -453,6 +452,13 @@ class BasePlugin:
         Any,
     ]
 
+    get_taxes_for_checkout: Callable[
+        ["CheckoutInfo", Iterable["CheckoutLineInfo"], Any],
+        Optional["TaxData"],
+    ]
+
+    get_taxes_for_order: Callable[["Order", Any], Optional["TaxData"]]
+
     get_client_token: Callable[[Any, Any], Any]
 
     get_order_line_tax_rate: Callable[
@@ -464,7 +470,8 @@ class BasePlugin:
     get_payment_config: Callable[[Any], Any]
 
     get_shipping_methods_for_checkout: Callable[
-        ["Checkout", Any], List["ShippingMethodData"]
+        ["CheckoutInfo", Iterable["CheckoutLineInfo"], Any],
+        List["ShippingMethodData"],
     ]
 
     get_supported_currencies: Callable[[Any], Any]

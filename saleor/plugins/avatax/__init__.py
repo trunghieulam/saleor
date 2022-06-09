@@ -210,6 +210,8 @@ def append_line_to_data(
     tax_included: Optional[bool] = None,
     discounted: Optional[bool] = False,
     tax_override_data: Optional[dict] = None,
+    # TODO In separate PR:
+    # Remove it in order changes
     ref1: Optional[str] = None,
     ref2: Optional[str] = None,
 ):
@@ -288,18 +290,11 @@ def get_checkout_lines_data(
         item_code = line_info.variant.sku or line_info.variant.get_global_id()
         tax_code = retrieve_tax_code_from_meta(product, default=None)
         tax_code = tax_code or retrieve_tax_code_from_meta(product_type)
-        prices_data = base_calculations.base_checkout_line_total(
+        price_data = base_calculations.calculate_base_line_total_price(
             line_info,
             channel,
             discounts,
         )
-
-        if tax_included:
-            undiscounted_amount = prices_data.undiscounted_price.gross.amount
-            price_with_discounts_amount = prices_data.price_with_discounts.gross.amount
-        else:
-            undiscounted_amount = prices_data.undiscounted_price.net.amount
-            price_with_discounts_amount = prices_data.price_with_discounts.net.amount
 
         append_line_to_data_kwargs = {
             "data": data,
@@ -309,7 +304,7 @@ def get_checkout_lines_data(
             # standard tax_code, Avatax will raise an exception: "When shipping
             # cross-border into CIF countries, Tax Included is not supported with mixed
             # positive and negative line amounts."
-            "tax_code": tax_code if undiscounted_amount else DEFAULT_TAX_CODE,
+            "tax_code": tax_code if price_data.amount else DEFAULT_TAX_CODE,
             "item_code": item_code,
             "name": name,
             "tax_included": tax_included,
@@ -319,7 +314,7 @@ def get_checkout_lines_data(
 
         append_line_to_data(
             **append_line_to_data_kwargs,
-            amount=price_with_discounts_amount,
+            amount=price_data.amount,
             ref1=line_info.variant.sku,
         )
 

@@ -47,6 +47,6 @@ class OrderMarkAsPaid(BaseMutation):
             order, user, app, info.context.plugins, transaction_reference
         )
 
-        update_order_search_document(order)
+        update_order_search_document(order, save=True)
 
         return OrderMarkAsPaid(order=order)
